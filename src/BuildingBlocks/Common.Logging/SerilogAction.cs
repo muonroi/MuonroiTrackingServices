@@ -3,12 +3,12 @@ using Serilog;
 
 namespace Common.Logging
 {
-    public static class Serilogger
+    public static class SerilogAction
     {
         public static Action<HostBuilderContext, LoggerConfiguration> Configure => (context, configuration) =>
         {
             var applicationName = context.HostingEnvironment.ApplicationName?.ToLower().Replace(".", "-");
-            var environmentName = context.HostingEnvironment.EnvironmentName ?? "Development";
+            var environmentName = context.HostingEnvironment.EnvironmentName;
             configuration
                 .WriteTo.Debug()
                 .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}")
