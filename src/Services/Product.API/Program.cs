@@ -1,40 +1,41 @@
 using Common.Logging;
+using Product.API.Extensions;
+using Product.API.Persistence;
 using Serilog;
-
+var builder = WebApplication.CreateBuilder(args);
+Log.Information("Starting CatalogProduct API up");
 try
 {
-    var builder = WebApplication.CreateBuilder(args);
-    Log.Information("Starting Product API up");
+    builder.Host.UseSerilog(SerilogAction.Configure);
 
-    builder.Host.UseSerilog(Serilogger.Configure);
+    builder.Host.AddConfigurationHost();
 
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddInfrastructure(builder.Configuration);
 
     var app = builder.Build();
 
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    app.UseInfrastructure();
 
-    app.UseHttpsRedirection();
-
-    app.UseAuthorization();
-
-    app.MapControllers();
+    app.MigrateDatabase<ProductContext>((context, _) =>
+        {
+            ProductContextSeed.SeedProductAsync(context, Log.Logger).Wait();
+        })
+        .Run();
 
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Product API terminated unexpectedly");
+    var type = ex.GetType().Name;
+    if (type.Equals("StopTheHostException", StringComparison.Ordinal))
+    {
+        throw;
+    }
+    Log.Fatal(ex, "CatalogProduct API terminated unexpectedly");
 }
 finally
 {
-    Log.Information("Shut down Product API complete");
+    Log.Information("Shut down CatalogProduct API complete");
     Log.CloseAndFlush();
 }
 
