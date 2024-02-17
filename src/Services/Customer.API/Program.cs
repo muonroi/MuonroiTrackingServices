@@ -1,36 +1,34 @@
 using Common.Logging;
+using Customer.API.Controller;
+using Customer.API.Extensions;
+using Customer.API.Persistence;
 using Serilog;
-
+var builder = WebApplication.CreateBuilder(args);
+Log.Information("Starting CatalogCustomer API up");
 try
 {
-    var builder = WebApplication.CreateBuilder(args);
-    Log.Information("Starting Customer API up");
-
     builder.Host.UseSerilog(SerilogAction.Configure);
 
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Host.AddConfigurationHost();
+
+    builder.Services.AddInfrastructure(builder.Configuration);
 
     var app = builder.Build();
+    app.MapGet("/", () => $"Welcome to {builder.Environment.ApplicationName}!");
+    app.MapCustomersApi();
+    app.UseInfrastructure();
 
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
-
-    app.UseHttpsRedirection();
-
-    app.UseAuthorization();
-
-    app.MapControllers();
-
-    app.Run();
+    app.SeedCustomerData()
+        .Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Customer API terminated unexpectedly");
+    var type = ex.GetType().Name;
+    if (type.Equals("StopTheHostException", StringComparison.Ordinal))
+    {
+        throw;
+    }
+    Log.Fatal(ex, "CatalogCustomer API terminated unexpectedly");
 }
 finally
 {
