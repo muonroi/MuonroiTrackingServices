@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Infrastructure.Common
 {
-    public class RepositoryBaseAsync<T, K, TContext> : IRepositoryBaseAsync<T, K, TContext> where T : EntityBase<K> where TContext : DbContext
+    public class RepositoryBaseAsync<T, TK, TContext> : IRepositoryBaseAsync<T, TK, TContext> where T : EntityBase<TK> where TContext : DbContext
     {
         private readonly TContext _context;
         private readonly IUnitOfWork<TContext> _unitOfWork;
@@ -14,7 +14,7 @@ namespace Infrastructure.Common
         public RepositoryBaseAsync(TContext context, IUnitOfWork<TContext> unitOfWork)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork)); ;
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
         public IQueryable<T> FindAll(bool trackChanges = false) =>
@@ -38,19 +38,19 @@ namespace Infrastructure.Common
             return items;
         }
 
-        public async Task<T?> GetByIdAsync(K id) => await FindByCondition(x => x.Id != null && x.Id.Equals(id)).FirstOrDefaultAsync();
+        public async Task<T?> GetByIdAsync(TK id) => await FindByCondition(x => x.Id != null && x.Id.Equals(id)).FirstOrDefaultAsync();
 
-        public async Task<T?> GetByIdAsync(K id, params Expression<Func<T, object>>[] includeProperties) =>
+        public async Task<T?> GetByIdAsync(TK id, params Expression<Func<T, object>>[] includeProperties) =>
             await FindByCondition(x => x.Id != null && x.Id.Equals(id), trackChanges: false, includeProperties)
                 .FirstOrDefaultAsync();
 
-        public async Task<K> CreateAsync(T entity)
+        public async Task<TK> CreateAsync(T entity)
         {
             await _context.Set<T>().AddAsync(entity);
             return entity.Id;
         }
 
-        public async Task<IList<K>> CreateListAsync(IEnumerable<T> entities)
+        public async Task<IList<TK>> CreateListAsync(IEnumerable<T> entities)
         {
             var entityBases = entities as T[] ?? entities.ToArray();
             await _context.Set<T>().AddRangeAsync(entityBases);
