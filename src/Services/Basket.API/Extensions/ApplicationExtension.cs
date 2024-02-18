@@ -1,4 +1,4 @@
-﻿namespace Product.API.Extensions
+﻿namespace Basket.API.Extensions
 {
     public static class ApplicationExtension
     {

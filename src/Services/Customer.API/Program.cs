@@ -3,8 +3,12 @@ using Customer.API.Controller;
 using Customer.API.Extensions;
 using Customer.API.Persistence;
 using Serilog;
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
 var builder = WebApplication.CreateBuilder(args);
-Log.Information("Starting CatalogCustomer API up");
+Log.Information($"Starting {builder.Environment.ApplicationName} API up");
 try
 {
     builder.Host.UseSerilog(SerilogAction.Configure);
@@ -28,10 +32,10 @@ catch (Exception ex)
     {
         throw;
     }
-    Log.Fatal(ex, "CatalogCustomer API terminated unexpectedly");
+    Log.Fatal(ex, $"{builder.Environment.ApplicationName} API terminated unexpectedly");
 }
 finally
 {
-    Log.Information("Shut down Customer API complete");
+    Log.Information($"Shut down {builder.Environment.ApplicationName} API complete");
     Log.CloseAndFlush();
 }
