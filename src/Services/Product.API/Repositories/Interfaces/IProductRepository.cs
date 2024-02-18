@@ -9,7 +9,7 @@ namespace Product.API.Repositories.Interfaces
         Task<IEnumerable<CatalogProduct>> GetProductsAsync();
         Task<CatalogProduct?> GetProductById(long id);
         Task<CatalogProduct?> GetProductByNo(string productNo);
-        Task CreateProduct(CatalogProduct product);
+        Task<long> CreateProduct(CatalogProduct product);
         Task UpdateProduct(CatalogProduct product);
         Task DeleteProduct(long id);
     }
