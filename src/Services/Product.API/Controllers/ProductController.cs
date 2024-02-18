@@ -88,9 +88,10 @@ namespace Product.API.Controllers
                 return BadRequest(result);
             }
             var product = _mapper.Map<CatalogProduct>(productDto);
-            await _catalogProductRepository.CreateProduct(product);
+            var productId = await _catalogProductRepository.CreateProduct(product);
             await _catalogProductRepository.SaveChangesAsync();
             var data = _mapper.Map<ProductDto>(product);
+            data.Id = productId;
             result = new BaseResponse<ProductDto>()
             {
                 Result = data,

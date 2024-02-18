@@ -1,48 +1,22 @@
-﻿using System.Linq.Expressions;
-using Contracts.Common.Interfaces;
+﻿using Contracts.Common.Interfaces;
 using Contracts.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Infrastructure.Common
 {
-    public class RepositoryBaseAsync<T, TK, TContext> : IRepositoryBaseAsync<T, TK, TContext> where T : EntityBase<TK> where TContext : DbContext
+    public class RepositoryBaseAsync<T, TK, TContext> : RepositoryQueryBaseAsync<T, TK, TContext>,
+        IRepositoryBaseAsync<T, TK, TContext>
+        where T : EntityBase<TK> where TContext : DbContext
     {
         private readonly TContext _context;
         private readonly IUnitOfWork<TContext> _unitOfWork;
 
-        public RepositoryBaseAsync(TContext context, IUnitOfWork<TContext> unitOfWork)
+        public RepositoryBaseAsync(TContext context, IUnitOfWork<TContext> unitOfWork) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
-
-        public IQueryable<T> FindAll(bool trackChanges = false) =>
-            !trackChanges ? _context.Set<T>().AsNoTracking() : _context.Set<T>();
-
-        public IQueryable<T> FindAll(bool trackChanges = false, params Expression<Func<T, object>>[] includeProperties)
-        {
-            var items = FindAll(trackChanges);
-            items = includeProperties.Aggregate(items, (current, includeProperty) => current.Include(includeProperty));
-            return items;
-        }
-
-        public IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false) =>
-        !trackChanges ? _context.Set<T>().Where(expression).AsNoTracking()
-            : _context.Set<T>().Where(expression);
-
-        public IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false, params Expression<Func<T, object>>[] includeProperties)
-        {
-            var items = FindByCondition(expression, trackChanges);
-            items = includeProperties.Aggregate(items, (current, includeProperty) => current.Include(includeProperty));
-            return items;
-        }
-
-        public async Task<T?> GetByIdAsync(TK id) => await FindByCondition(x => x.Id != null && x.Id.Equals(id)).FirstOrDefaultAsync();
-
-        public async Task<T?> GetByIdAsync(TK id, params Expression<Func<T, object>>[] includeProperties) =>
-            await FindByCondition(x => x.Id != null && x.Id.Equals(id), trackChanges: false, includeProperties)
-                .FirstOrDefaultAsync();
 
         public async Task<TK> CreateAsync(T entity)
         {
@@ -61,6 +35,7 @@ namespace Infrastructure.Common
         {
             if (_context.Entry(entity).State == EntityState.Unchanged) return Task.CompletedTask;
             var exist = _context.Set<T>().Find(entity.Id);
+            if (exist is null) return Task.CompletedTask;
             _context.Entry(exist).CurrentValues.SetValues(entity);
             return Task.CompletedTask;
         }

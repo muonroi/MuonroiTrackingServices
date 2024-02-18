@@ -2,8 +2,11 @@ using Common.Logging;
 using Product.API.Extensions;
 using Product.API.Persistence;
 using Serilog;
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 var builder = WebApplication.CreateBuilder(args);
-Log.Information("Starting CatalogProduct API up");
+Log.Information($"Starting {builder.Environment.ApplicationName} API up");
 try
 {
     builder.Host.UseSerilog(SerilogAction.Configure);
@@ -31,11 +34,11 @@ catch (Exception ex)
     {
         throw;
     }
-    Log.Fatal(ex, "CatalogProduct API terminated unexpectedly");
+    Log.Fatal(ex, $"{builder.Environment.ApplicationName}  API terminated unexpectedly");
 }
 finally
 {
-    Log.Information("Shut down CatalogProduct API complete");
+    Log.Information($"Shut down {builder.Environment.ApplicationName} API complete");
     Log.CloseAndFlush();
 }
 
